@@ -1,4 +1,10 @@
 from Solver import Solve, PrintGrid
+from ScreenReader import read_numbers
+from math import sqrt
+import pyautogui
+from ppocr.utils.logging import get_logger
+import logging
+import time
 
 test_grid_5 = [
     [1, 3, 7, 5, 9],
@@ -36,17 +42,59 @@ test_grid_6 = [
 test_row_targets_6 = [27, 10, 11, 21, 10, 5]
 test_col_targets_6 = [18, 11, 20, 19, 11, 5]
 
-if __name__=="__main__":
-    grid = [
-        [3, 1, 2],
-        [1, 7, 6],
-        [1, 5, 3]
-    ]
-    n = len(grid)
-    row_targets = [4, 7, 3]
-    col_targets = [3, 8, 3]
+def HandMadeInputSolve():
+    n = int(input('n: '))
+    grid = [[0] * n for _ in range(n)]
+    for i in range(n):
+        grid[i] = [int(x) for x in input().split()]
+    row_targets = [int(x) for x in input('row ').split()]
+    col_targets = [int(x) for x in input('col ').split()]
 
-    # solution = Solve(grid, row_targets, col_targets)
-    n = len(test_grid_7)
-    solution = Solve(test_grid_7, test_row_targets_7, test_col_targets_7)
+    solution = Solve(grid, row_targets, col_targets)
     PrintGrid(solution)
+
+def ChangeStatus():
+    change_point = [630,1120]
+    time.sleep(2)
+    pyautogui.click(change_point[0], change_point[1])
+    time.sleep(2)
+
+def ClickNumbers(solution, boxes, select):
+    for i,row in enumerate(solution):
+        for j in range(len(row)):
+            box = boxes[i*(len(solution)+1)+j+1]
+            if row[j] == select:
+                pyautogui.click(box[0]+x, box[1]+y, button='left')
+                time.sleep(0.8)
+
+def Play(solution, boxes, x, y):
+    boxes = boxes[len(solution):]
+
+    ClickNumbers(solution=solution, boxes=boxes, select=True)
+    ChangeStatus()
+    ClickNumbers(solution=solution, boxes=boxes, select=False)
+                
+if __name__=="__main__":
+    x,y = 350,380
+
+    # Avoid huge logging by the ocr.
+    logger = get_logger()
+    logger.setLevel(logging.ERROR)
+    while True:
+        [numbers, boxes] = read_numbers(x, y)
+        n = int(sqrt(len(numbers)+1))-1
+        col_targets = numbers[:n]
+        row_targets = []
+        numbers = numbers[n:]
+        grid = []
+        for i in range(n):
+            row_targets.append(numbers[i*(n+1)])
+            grid.append(numbers[i*(n+1) + 1:i*(n+1) + n + 1])
+        PrintGrid(grid)
+        print(col_targets)
+        print(row_targets)
+
+        solution = Solve(grid, row_targets, col_targets)
+        PrintGrid(solution)
+        Play(solution, boxes, x, y)
+        input()

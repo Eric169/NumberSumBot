@@ -4,8 +4,11 @@
 # 3. If a value appears in all the subset with correct sum keep it
 
 def PrintGrid(grid):
-    for row in grid:
-        print(row)
+    for i,row in enumerate(grid):
+        print(i+1, end=' ')
+        for val in row:
+            print(val, end='\t')
+        print('\n')
 
 def CheckResult(result, grid, row_targets, col_targets):
     n = len(grid)
@@ -21,23 +24,22 @@ def CheckResult(result, grid, row_targets, col_targets):
     return True
 
 def SumSequence(i, s, usable, grid, result, row):
-    # First count the correct values
+    # First count the correct values.
     sum = 0
     for j in range(len(result)):
         if row and result[i][j] == 2:
             sum += grid[i][j]
         if not row and result[j][i] == 2:
             sum += grid[j][i]
-    if i == 1:
-        print('sum', sum)
+
     n = len(usable)
     for j in range(n):
         if (s & (1<<j)) != 0:
             sum += (grid[i][usable[j]] if row else grid[usable[j]][i])
     return sum
 
-# Return position of valid numbers in a row/column
-# Only count as usable the 'maybe' values
+# Return position of valid numbers in a row/column.
+# Only count as usable the 'maybe' values.
 def GetUsable(result, i, row):
     usable=[]
     n = len(result)
@@ -52,15 +54,14 @@ def GetUsable(result, i, row):
     return usable
 
 def DoRows(result, grid, n, row_targets):
-    print("Do rows")
+    # print("Do rows")
     for i in range(n):
-        # create list of values I can use
+        # create list of values I can use.
         usable = GetUsable(result, i, row=True)
         # print(i, 'usable', usable)
         new_result = [0] * n
         n_matches = 0
-        # Try all permutations of usable values
-        # LSB is row usable[0]
+        # Try all permutations of usable values.
         for s in range(1, 1<<len(usable)):
             sumRow = SumSequence(i, s, usable, grid, result, row=True)
             # print('s', s, sumRow)
@@ -71,7 +72,7 @@ def DoRows(result, grid, n, row_targets):
                         1 if (s & (1<<j)) != 0 else new_result[usable[j]]
                     )
         
-        # If I found only one match then it's the correct one
+        # If I found only one match then it's the correct one.
         if n_matches == 1:
             for j in range(len(new_result)):
                 if new_result[j] == 1: new_result[j] = 2
@@ -82,17 +83,16 @@ def DoRows(result, grid, n, row_targets):
     return result
 
 def DoCols(result, grid, n, col_targets):
-    print("Do cols")
+    # print("Do cols")
     for i in range(n):
-        # create list of values I can use
+        # create list of values I can use.
         usable = GetUsable(result, i, row=False)
-        print(i, 'usable', usable)
+        # print(i, 'usable', usable)
         new_result = [0] * n
         n_matches = 0
-        # Try all permutations of usable values
+        # Try all permutations of usable values.
         for s in range(1, 1<<len(usable)):
             sumCol = SumSequence(i, s, usable, grid, result, row=False)
-            if i == 1: print('s', s, 'sumcol',sumCol)
             if sumCol == col_targets[i]:
                 n_matches += 1
                 for j in range(len(usable)):
@@ -101,7 +101,7 @@ def DoCols(result, grid, n, col_targets):
                     )
         # print('col result', new_result)
 
-        # If I found only one match then it's the correct one
+        # If I found only one match then it's the correct one.
         if n_matches == 1:
             for j in range(len(new_result)):
                 if new_result[j] == 1: new_result[j] = 2
@@ -122,14 +122,14 @@ def ResultConversion(result):
 
 def Solve(grid, row_targets, col_targets):
     n = len(grid)
-    # Result contains 0 if value is not valid, 1 if could be, 2 if it's correct
+    # Result contains 0 if value is not valid, 1 if could be, 2 if it's correct.
     result = [[1] * n for _ in range(n)]
     i = 0
-    while not CheckResult(result, grid, row_targets, col_targets) and i < 10:
+    while not CheckResult(result, grid, row_targets, col_targets) and i < 1000:
         result = DoRows(result, grid, n, row_targets)
-        PrintGrid(result)
+        # PrintGrid(result)
         result = DoCols(result, grid, n, col_targets)
-        PrintGrid(result)
         i += 1
-        print(i)
+        # print(i)
+    PrintGrid(result)
     return ResultConversion(result)
