@@ -13,14 +13,33 @@ def read_numbers(x, y):
 
     image = pyscreenshot.grab(bbox=(x, y, 940, 980)) 
 
-    image.save(img_path) 
+    image.save(img_path)
+
+    # Image optimizations that are apparently worse for some reason.
+    # image = cv2.imread(img_path)
+    # gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    # _, binary = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    # cv2.imwrite(img_path, binary)
 
     ocr = PaddleOCR(use_angle_cls=True)
 
-    scale_factor = 1.4
+    scale_factor = 1.45
     enlarged_img = enlarge_img(img_path, scale_factor)
 
     result = ocr.ocr(enlarged_img)
+
+    # In the game there are 3 kind of tables and for the smaller ones
+    # is better to scale less for the ocr.
+    if len(result[0])==48:
+        print('scale 1.2')
+        scale_factor = 1.2
+        enlarged_img = enlarge_img(img_path, scale_factor)
+        result = ocr.ocr(enlarged_img)
+    if len(result[0])==63:
+        print('scale 1.3')
+        scale_factor = 1.3
+        enlarged_img = enlarge_img(img_path, scale_factor)
+        result = ocr.ocr(enlarged_img)
 
     # Boxes contains the center of rectangles of numbers found
     boxes = []

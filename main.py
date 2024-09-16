@@ -4,7 +4,9 @@ from math import sqrt
 import pyautogui
 from ppocr.utils.logging import get_logger
 import logging
-import time
+from PIL import Image
+import numpy as np
+import pyscreenshot
 
 test_grid_5 = [
     [1, 3, 7, 5, 9],
@@ -53,28 +55,39 @@ def HandMadeInputSolve():
     solution = Solve(grid, row_targets, col_targets)
     PrintGrid(solution)
 
+def Test():
+    solution = Solve(test_grid_5, test_row_targets_5, test_col_targets_5)
+    PrintGrid(solution)
+
 def ChangeStatus():
     change_point = [630,1120]
-    time.sleep(2)
-    pyautogui.click(change_point[0], change_point[1])
-    time.sleep(2)
 
-def ClickNumbers(solution, boxes, select):
+    pyautogui.click(change_point[0], change_point[1])
+    pyautogui.sleep(0.7)
+
+def ClickNumbers(solution, boxes, select, x, y):
     for i,row in enumerate(solution):
         for j in range(len(row)):
             box = boxes[i*(len(solution)+1)+j+1]
             if row[j] == select:
+                # Better to click twice because of latency.
                 pyautogui.click(box[0]+x, box[1]+y, button='left')
-                time.sleep(0.8)
+                pyautogui.sleep(0.07)
+                pyautogui.click(box[0]+x, box[1]+y, button='left')
+                pyautogui.sleep(0.07)
 
 def Play(solution, boxes, x, y):
     boxes = boxes[len(solution):]
 
-    ClickNumbers(solution=solution, boxes=boxes, select=True)
+    ClickNumbers(solution=solution, boxes=boxes, select=True, x=x, y=y)
     ChangeStatus()
-    ClickNumbers(solution=solution, boxes=boxes, select=False)
+    ClickNumbers(solution=solution, boxes=boxes, select=False, x=x, y=y)
                 
 if __name__=="__main__":
+    # Compile with -O to not run tests
+    if __debug__:
+        Test()
+        exit(0)
     x,y = 350,380
 
     # Avoid huge logging by the ocr.

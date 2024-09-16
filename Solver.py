@@ -1,7 +1,7 @@
 # Levels of intelligence
 # 1. Pick the possible sums for rows and cols
-# 2. (current) if a subset is valid and unique keep it
-# 3. If a value appears in all the subset with correct sum keep it
+# 2. If a subset is valid and unique keep it
+# 3. (current) If a value appears in all the subset with correct sum keep it
 
 def PrintGrid(grid):
     for i,row in enumerate(grid):
@@ -53,63 +53,37 @@ def GetUsable(result, i, row):
                 usable.append(j)
     return usable
 
-def DoRows(result, grid, n, row_targets):
-    # print("Do rows")
+def DoIter(result, grid, n, targets, row):
     for i in range(n):
         # create list of values I can use.
-        usable = GetUsable(result, i, row=True)
-        # print(i, 'usable', usable)
+        usable = GetUsable(result, i, row=row)
         new_result = [0] * n
         n_matches = 0
+
+        # If a value appears in all matches it's correct
+        valueOccurance = [0] * len(usable)
+
         # Try all permutations of usable values.
         for s in range(1, 1<<len(usable)):
-            sumRow = SumSequence(i, s, usable, grid, result, row=True)
-            # print('s', s, sumRow)
-            if sumRow == row_targets[i]:
+            sumTarget = SumSequence(i, s, usable, grid, result, row=row)
+            if sumTarget == targets[i]:
                 n_matches += 1
                 for j in range(len(usable)):
-                    new_result[usable[j]] = (
-                        1 if (s & (1<<j)) != 0 else new_result[usable[j]]
-                    )
-        
-        # If I found only one match then it's the correct one.
-        if n_matches == 1:
-            for j in range(len(new_result)):
-                if new_result[j] == 1: new_result[j] = 2
-        for j in range(n):
-            result[i][j] = new_result[j] if result[i][j] != 2 else result[i][j]
-        # print('new result')
-        # PrintGrid(result)
-    return result
+                    if (s & (1<<j)) != 0:
+                        new_result[usable[j]] = 1
+                        valueOccurance[j] += 1
 
-def DoCols(result, grid, n, col_targets):
-    # print("Do cols")
-    for i in range(n):
-        # create list of values I can use.
-        usable = GetUsable(result, i, row=False)
-        # print(i, 'usable', usable)
-        new_result = [0] * n
-        n_matches = 0
-        # Try all permutations of usable values.
-        for s in range(1, 1<<len(usable)):
-            sumCol = SumSequence(i, s, usable, grid, result, row=False)
-            if sumCol == col_targets[i]:
-                n_matches += 1
-                for j in range(len(usable)):
-                    new_result[usable[j]] = (
-                        1 if (s & (1<<j)) != 0 else new_result[usable[j]]
-                    )
-        # print('col result', new_result)
-
-        # If I found only one match then it's the correct one.
-        if n_matches == 1:
-            for j in range(len(new_result)):
-                if new_result[j] == 1: new_result[j] = 2
-
-        for j in range(len(usable)):
-            result[usable[j]][i] = new_result[usable[j]]
-        # print('new result')
-        # PrintGrid(result)
+        # Set as correct all the values that appear in all possible solutions.
+        if n_matches != 0:
+            for j in range(len(usable)):
+                if valueOccurance[j] == n_matches:
+                    new_result[usable[j]] = 2
+        if row:
+            for j in range(len(usable)):
+                result[i][usable[j]] = new_result[usable[j]]
+        else:
+            for j in range(len(usable)):
+                result[usable[j]][i] = new_result[usable[j]]
     return result
 
 def ResultConversion(result):
@@ -125,11 +99,17 @@ def Solve(grid, row_targets, col_targets):
     # Result contains 0 if value is not valid, 1 if could be, 2 if it's correct.
     result = [[1] * n for _ in range(n)]
     i = 0
-    while not CheckResult(result, grid, row_targets, col_targets) and i < 1000:
-        result = DoRows(result, grid, n, row_targets)
-        # PrintGrid(result)
-        result = DoCols(result, grid, n, col_targets)
+    max_iter = 20
+    while (not CheckResult(result, grid, row_targets, col_targets)
+            and i < max_iter):
+        result = DoIter(result, grid, n, row_targets, row=True)
+        result = DoIter(result, grid, n, col_targets, row=False)
         i += 1
-        # print(i)
+
+    # If solution is not found do nothing
+    if i == max_iter:
+        print("Solution not found")
+        print(result)
+        exit()
     PrintGrid(result)
     return ResultConversion(result)
